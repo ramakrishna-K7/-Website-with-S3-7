@@ -1,21 +1,20 @@
+
+               
 pipeline {
     agent any
 
     environment {
-        AWS_S3_BUCKET = 'portfolio-site7' // change this to your bucket
-        AWS_DEFAULT_REGION = 'us-east-1'    // change if your region differs
-        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id') // Jenkins credentials ID
-        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key') // Jenkins credentials ID
-    }
-
-    triggers {
-        pollSCM('H/5 * * * *') // optional: poll every 5 minutes
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id') // Jenkins credential ID
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key') // Jenkins credential ID
+        AWS_REGION = 'us-east-1'
+        S3_BUCKET = 'portfolio-site7'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'main', credentialsId: 'git', url: 'https://github.com/ramakrishna-K7/-Website-with-S3-7.git'
+                 git branch: 'main', credentialsId: 'git', url: 'https://github.com/ramakrishna-K7/-Website-with-S3-7.git'
+
             }
         }
 
@@ -26,23 +25,18 @@ pipeline {
                 then
                     echo "Installing AWS CLI..."
                     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-                    unzip -q awscliv2.zip
+                    unzip awscliv2.zip
                     sudo ./aws/install
                 fi
-                aws --version
                 '''
             }
         }
 
-        stage('Deploy to S3') {
+        stage('Sync Files to S3') {
             steps {
                 sh '''
                 echo "Syncing files to S3..."
-                aws s3 sync . s3://$AWS_S3_BUCKET \
-                  --region $AWS_DEFAULT_REGION \
-                  --acl public-read \
-                  --delete \
-                  --exclude ".git/*"
+                aws s3 sync . s3://$S3_BUCKET --region $AWS_REGION --delete
                 '''
             }
         }
@@ -50,10 +44,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment to S3 successful!'
+            echo 'Deployment to S3 completed successfully!'
         }
         failure {
-            echo '❌ Deployment failed.'
+            echo 'Deployment failed. Please check the logs.'
         }
     }
 }
