@@ -36,7 +36,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Syncing files to S3..."
-                aws s3 sync . s3://$S3_BUCKET --region $AWS_REGION --delete
+                aws s3 sync  website/ s3://$S3_BUCKET --region $AWS_REGION --delete
                 '''
             }
         }
